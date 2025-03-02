@@ -20,7 +20,7 @@ A Streamlit-based conversational AI application powered by Google's Gemini model
 - **Pandas 2.0.3**: For data handling and CSV export functionality
 
 ### AI Models
-- **Gemini Pro**: Google's large language model optimized for text-based tasks
+- **gemini-2.0-flash**: Google's large language model optimized for text-based tasks
   - **Features**: High-quality text generation, source citation, reasoning capabilities
   - **Parameters**: Controllable temperature, top-k, top-p, and maximum output token settings
   - **Context Window**: Supports up to 32,000 tokens
