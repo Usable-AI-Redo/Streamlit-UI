@@ -55,6 +55,7 @@ ENABLE_TIMESTAMPS = True         # Show timestamps on messages
 ENABLE_FEEDBACK = True           # Show feedback buttons on responses
 ENABLE_EXPORT = True             # Enable conversation export feature
 ENABLE_STREAMING = False         # Set to True when implementing streaming responses
+ENABLE_SPELL_CHECK = True        # Enable automatic spelling correction
 
 #-------------------------------------------------------
 # API Settings

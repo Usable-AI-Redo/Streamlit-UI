@@ -12,23 +12,21 @@ import sys
 sys.path.append(".")
 
 # Import configuration and components
-from src.config.config import (
+from src.config.theme_config import (
     APP_TITLE, 
     APP_ICON, 
     DEFAULT_THEME, 
     LIGHT_MODE, 
     DARK_MODE
 )
+from src.config.guardrails_config import (
+    ENABLE_SPELL_CHECK,
+    ENABLE_PII_DETECTION,
+    SHOW_SAFETY_INDICATORS
+)
 from src.components.header import render_header
 from src.components.sidebar import render_sidebar
-from src.components.chat_interface import display_chat_history, handle_user_input
-
-# Initialize session state for theme if not already present
-if "theme" not in st.session_state:
-    st.session_state.theme = DEFAULT_THEME
-
-# Get current theme
-current_theme = LIGHT_MODE if st.session_state.theme == "light" else DARK_MODE
+from src.components.chat_interface import render_chat_interface
 
 # Configure the page
 st.set_page_config(
@@ -37,124 +35,133 @@ st.set_page_config(
     layout="wide"
 )
 
+# Initialize session state variables
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+    
+if "conversation_history" not in st.session_state:
+    st.session_state.conversation_history = []
+    
+if "theme" not in st.session_state:
+    st.session_state.theme = DEFAULT_THEME
+    
+# Add dark_mode state for newer components
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = DEFAULT_THEME == "dark"
+    
+# Initialize spell check toggle
+if "spell_check" not in st.session_state:
+    st.session_state.spell_check = ENABLE_SPELL_CHECK
+    
+# Initialize security settings
+if "show_safety_indicators" not in st.session_state:
+    st.session_state.show_safety_indicators = SHOW_SAFETY_INDICATORS
+    
+if "enable_pii_detection" not in st.session_state:
+    st.session_state.enable_pii_detection = ENABLE_PII_DETECTION
+
 def apply_theme_css():
     """
     Apply CSS styling based on the current theme.
     
     This function dynamically generates CSS based on the selected theme
-    and applies it to the Streamlit application.
+    and applies it to the Streamlit application, ensuring all elements
+    follow the selected theme consistently.
     """
     # Select theme colors based on current theme
-    if st.session_state.theme == "dark":
-        bg_color = DARK_MODE["BG_COLOR"]
-        text_color = DARK_MODE["TEXT_COLOR"]
-        secondary_bg = DARK_MODE["SECONDARY_BG_COLOR"]
-        primary_color = DARK_MODE["PRIMARY_COLOR"]
+    if st.session_state.dark_mode:
+        theme = DARK_MODE
     else:
-        bg_color = LIGHT_MODE["BG_COLOR"]
-        text_color = LIGHT_MODE["TEXT_COLOR"]
-        secondary_bg = LIGHT_MODE["SECONDARY_BG_COLOR"]
-        primary_color = LIGHT_MODE["PRIMARY_COLOR"]
+        theme = LIGHT_MODE
     
     # Apply CSS with theme-specific variables
     st.markdown(f"""
     <style>
-        /* Base theme colors */
-        :root {{
-            --primary-color: {primary_color};
-            --text-color: {text_color};
-            --background-color: {bg_color};
-            --secondary-bg-color: {secondary_bg};
+        /* Reset all Streamlit elements to follow theme */
+        .stApp {{
+            background-color: {theme["BG_COLOR"]};
+            color: {theme["TEXT_COLOR"]};
         }}
         
-        /* Main page background - only in dark mode */
-        {f".stApp {{ background-color: {bg_color}; }}" if st.session_state.theme == "dark" else ""}
+        /* Sidebar styling - ensure it gets the correct background */
+        section[data-testid="stSidebar"] > div {{
+            background-color: {theme["BG_COLOR"]};
+            border-right: 1px solid {theme["SECONDARY_BG_COLOR"]};
+        }}
         
-        /* Text color adjustments - only in dark mode */
-        {f".stMarkdown, .stText {{ color: {text_color}; }}" if st.session_state.theme == "dark" else ""}
+        /* Control sidebar width */
+        section[data-testid="stSidebar"] {{
+            width: 18rem !important;
+        }}
         
-        /* Main content area */
+        /* All widget containers */
+        div.stButton > button, div.stDownloadButton > button {{
+            background-color: {theme["PRIMARY_COLOR"]};
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.3rem;
+        }}
+        
+        div.stButton > button:hover, div.stDownloadButton > button:hover {{
+            background-color: {theme["ACCENT_COLOR"] if "ACCENT_COLOR" in theme else theme["PRIMARY_COLOR"]};
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }}
+        
+        /* Main container - ensures no white backgrounds */
         .main .block-container {{
-            padding-top: 2rem;
+            background-color: {theme["BG_COLOR"]};
+            padding: 2rem 1.5rem;
         }}
         
-        /* Chat message styling */
+        /* Headers */
+        h1, h2, h3, h4, h5, h6 {{
+            color: {theme["PRIMARY_COLOR"]};
+        }}
+        
+        /* Fix markdown sections */
+        .stMarkdown {{
+            color: {theme["TEXT_COLOR"]} !important;
+        }}
+        
+        /* Text elements */
+        p, div, span, li, td, th, code {{
+            color: {theme["TEXT_COLOR"]};
+        }}
+        
+        /* Text input fields */
+        .stTextInput > div > div > input {{
+            background-color: {theme["SECONDARY_BG_COLOR"]};
+            color: {theme["TEXT_COLOR"]};
+            border-color: {theme["SECONDARY_BG_COLOR"]};
+        }}
+        
+        /* Chat messages */
         .stChatMessage {{
-            background-color: var(--secondary-bg-color);
-            border-radius: 8px;
-            margin-bottom: 12px;
-            transition: all 0.2s ease;
+            background-color: {theme["SECONDARY_BG_COLOR"]};
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
         }}
         
-        .stChatMessage:hover {{
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }}
-        
-        /* Button styling */
-        .stButton button {{
-            border-radius: 4px;
-            transition: all 0.2s ease;
-        }}
-        
-        .stButton button:hover {{
-            transform: translateY(-1px);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }}
-        
-        /* Timestamps and captions */
-        .caption {{
-            opacity: 0.7;
-            font-size: 0.9em;
-        }}
-        
-        /* Custom scrollbar for containers */
-        [data-testid="stVerticalBlock"] {{
-            scrollbar-width: thin;
-        }}
-        
-        /* Make source expanders more compact */
-        .streamlit-expanderHeader {{
-            font-size: 0.9em;
-            padding: 0.5em;
-            background-color: var(--secondary-bg-color);
+        .stChatMessageContent {{
+            background-color: {theme["SECONDARY_BG_COLOR"]};
+            color: {theme["TEXT_COLOR"]};
         }}
     </style>
     """, unsafe_allow_html=True)
 
-# Initialize session state for messages if not already present
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
 def main():
-    """
-    Main application entry point.
-    
-    This function orchestrates the flow of the application:
-    1. Applies CSS styling
-    2. Renders the header
-    3. Renders the sidebar with controls
-    4. Displays chat history
-    5. Handles user input
-    """
     # Apply theme CSS
     apply_theme_css()
     
-    # Display the header
+    # Render components
     render_header()
+    render_sidebar()
     
-    # Display the sidebar and get reset state
-    reset_chat = render_sidebar()
-    
-    # Reset chat if button is clicked
-    if reset_chat:
-        st.session_state.messages = []
-        st.rerun()
-    
-    # Display chat history
-    display_chat_history()
-    
-    # Handle user input
-    handle_user_input()
+    # Main chat area
+    with st.container():
+        render_chat_interface()
 
 if __name__ == "__main__":
     main() 

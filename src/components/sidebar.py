@@ -9,11 +9,15 @@ import pandas as pd
 import base64
 from datetime import datetime
 
-from ..config.config import (
+from ..config.theme_config import (
     LIGHT_MODE, 
     DARK_MODE, 
     DEFAULT_THEME,
-    ENABLE_EXPORT
+)
+from ..config.guardrails_config import (
+    SHOW_SAFETY_INDICATORS,
+    ENABLE_PII_DETECTION,
+    ENABLE_SPELL_CHECK
 )
 
 def render_sidebar():
@@ -22,18 +26,13 @@ def render_sidebar():
     
     This function manages theme switching, chat reset functionality,
     export options, conversation history display, and info section.
-    
-    Returns:
-        bool: True if the reset button was clicked, False otherwise
     """
-    reset_chat = False
-    
-    # Initialize theme setting
-    if "theme" not in st.session_state:
-        st.session_state.theme = DEFAULT_THEME
+    # Initialize theme setting if needed
+    if "dark_mode" not in st.session_state:
+        st.session_state.dark_mode = DEFAULT_THEME == "dark"
     
     # Get current theme
-    current_theme = LIGHT_MODE if st.session_state.theme == "light" else DARK_MODE
+    current_theme = DARK_MODE if st.session_state.dark_mode else LIGHT_MODE
     
     with st.sidebar:
         # Add company logo placeholder
@@ -47,144 +46,131 @@ def render_sidebar():
         
         st.markdown("### Chat Controls")
         
-        # Reset chat button with professional styling
-        if st.button("Reset Conversation", type="primary", use_container_width=True):
-            reset_chat = True
+        # Create a section for the Reset Button with enhanced styling
+        st.markdown(f"""
+        <style>
+        div[data-testid="stExpander"] {{
+            border: 1px solid {current_theme["SECONDARY_BG_COLOR"]};
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }}
+        .reset-button-container {{
+            text-align: center;
+            margin-bottom: 1rem;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
         
-        # Add theme toggle
-        theme_col1, theme_col2 = st.columns(2)
+        # Add a confirmation dialog for the reset function
+        if "show_reset_confirm" not in st.session_state:
+            st.session_state.show_reset_confirm = False
+            
+        if not st.session_state.show_reset_confirm:
+            # Display the main reset button
+            if st.button("🔄 Reset Chat", 
+                        key="reset_main_btn", 
+                        use_container_width=True,
+                        help="Clear the current conversation and start a new chat"):
+                st.session_state.show_reset_confirm = True
+                st.rerun()
+        else:
+            # Display confirmation dialog
+            st.warning("Are you sure you want to reset the chat? All messages will be lost.")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("✅ Yes", key="reset_confirm_yes", use_container_width=True):
+                    # Clear messages and history
+                    st.session_state.messages = []
+                    st.session_state.conversation_history = []
+                    st.session_state.show_reset_confirm = False
+                    st.rerun()
+            with col2:
+                if st.button("❌ No", key="reset_confirm_no", use_container_width=True):
+                    st.session_state.show_reset_confirm = False
+                    st.rerun()
+        
+        # Add Advanced Settings section
+        st.sidebar.subheader("⚙️ Advanced Settings")
+        
+        # Theme Toggle
+        theme_col1, theme_col2 = st.sidebar.columns(2)
         with theme_col1:
-            st.markdown("**Theme:**")
+            st.write("Theme")
         with theme_col2:
-            if st.toggle("Dark Mode", value=st.session_state.theme == "dark"):
-                st.session_state.theme = "dark"
+            if st.toggle("Dark Mode", value=st.session_state.dark_mode, key="theme_toggle"):
+                st.session_state.dark_mode = True
             else:
-                st.session_state.theme = "light"
+                st.session_state.dark_mode = False
         
-        # Export options section    
-        if ENABLE_EXPORT and len(st.session_state.messages) > 0:
-            st.divider()
-            st.markdown("### Export Options")
-            
-            export_col1, export_col2 = st.columns(2)
-            
-            with export_col1:
-                if st.button("📄 Export as TXT", use_container_width=True):
-                    txt_content = generate_text_export(st.session_state.messages)
-                    b64_txt = export_as_file(txt_content, "text/plain")
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    st.markdown(
-                        f'<a href="data:text/plain;base64,{b64_txt}" download="chat_export_{timestamp}.txt">Download TXT</a>',
-                        unsafe_allow_html=True
-                    )
-                    st.toast("Chat exported as TXT!")
-            
-            with export_col2:
-                if st.button("📊 Export as CSV", use_container_width=True):
-                    csv_content = generate_csv_export(st.session_state.messages)
-                    b64_csv = export_as_file(csv_content, "text/csv")
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    st.markdown(
-                        f'<a href="data:text/csv;base64,{b64_csv}" download="chat_export_{timestamp}.csv">Download CSV</a>',
-                        unsafe_allow_html=True
-                    )
-                    st.toast("Chat exported as CSV!")
+        # Spell Check Toggle
+        spell_col1, spell_col2 = st.sidebar.columns(2)
+        with spell_col1:
+            st.write("Spell Check")
+        with spell_col2:
+            if "spell_check" not in st.session_state:
+                st.session_state.spell_check = True
+            if st.toggle("Enable", value=st.session_state.spell_check, key="spell_check_toggle"):
+                st.session_state.spell_check = True
+            else:
+                st.session_state.spell_check = False
+        
+        # Security Settings
+        security_col1, security_col2 = st.sidebar.columns(2)
+        with security_col1:
+            st.write("PII Detection")
+        with security_col2:
+            if "enable_pii_detection" not in st.session_state:
+                st.session_state.enable_pii_detection = True
+            if st.toggle("Enable", value=st.session_state.enable_pii_detection, key="pii_toggle"):
+                st.session_state.enable_pii_detection = True
+            else:
+                st.session_state.enable_pii_detection = False
+        
+        # Safety Indicators Toggle
+        safety_col1, safety_col2 = st.sidebar.columns(2)
+        with safety_col1:
+            st.write("Safety Indicators")
+        with safety_col2:
+            if "show_safety_indicators" not in st.session_state:
+                st.session_state.show_safety_indicators = True
+            if st.toggle("Show", value=st.session_state.show_safety_indicators, key="safety_toggle"):
+                st.session_state.show_safety_indicators = True
+            else:
+                st.session_state.show_safety_indicators = False
+        
+        st.sidebar.divider()
         
         # History section
-        st.divider()
         st.markdown("### 📜 Conversation History")
         
         # Create a container for scrollable history
         history_container = st.container(height=300, border=True)
         
         with history_container:
-            if len(st.session_state.messages) > 0:
+            if "conversation_history" in st.session_state and len(st.session_state.conversation_history) > 0:
                 # Display user queries in the history section
-                user_queries = [msg["content"] for msg in st.session_state.messages if msg["role"] == "user"]
-                
-                for i, query in enumerate(user_queries):
-                    # Truncate long queries for display
-                    display_query = query if len(query) < 40 else query[:37] + "..."
+                for i, item in enumerate(st.session_state.conversation_history):
+                    # Get the short query for display
+                    display_query = item.get("short_query", "Query")
+                    timestamp = item.get("timestamp", "")
                     
                     # Create a clickable element that can be used to recall the conversation
-                    if st.button(f"Q{i+1}: {display_query}", key=f"history_{i}", use_container_width=True):
-                        # Scroll to this part of the conversation in the main chat area
-                        st.toast(f"Showing query: {display_query}")
+                    if st.button(f"{display_query}", key=f"history_{i}", use_container_width=True):
+                        # In a real implementation, this would scroll to or highlight the query
+                        st.toast(f"Showing query from {timestamp}")
             else:
                 st.info("No conversation history yet.")
         
-        # About section
         st.divider()
+        
+        # Info section
         st.markdown("### About")
         st.markdown(f"""
         <div style="background-color: {current_theme["SECONDARY_BG_COLOR"]}; padding: 15px; border-radius: 5px; border-left: 4px solid {current_theme["PRIMARY_COLOR"]};">
-            <p style="margin: 0; color: {current_theme["SECONDARY_COLOR"]};">This chatbot uses Google's Gemini model to answer your questions.</p>
-            <p style="margin-top: 10px; color: {current_theme["SECONDARY_COLOR"]};">Ask anything and get informative responses!</p>
+            <p style="margin: 0; color: {current_theme["TEXT_COLOR"]};">This chatbot uses Google's Gemini model with advanced AI safety guardrails.</p>
+            <p style="margin-top: 10px; color: {current_theme["TEXT_COLOR"]};">Includes input validation, PII protection, and output safety checks.</p>
         </div>
         """, unsafe_allow_html=True)
         
-        # Footer
         st.divider()
-        st.markdown(f"""<div style='text-align: center; color: {current_theme["SECONDARY_COLOR"]}; font-size: 12px;'>
-                     Powered by Google Gemini & Streamlit</div>""", unsafe_allow_html=True)
-    
-    return reset_chat
-
-def generate_text_export(messages):
-    """
-    Generate a text export of the chat conversation.
-    
-    Args:
-        messages (list): List of message dictionaries from session state
-        
-    Returns:
-        str: Formatted text export of the conversation
-    """
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    export_text = f"Chat Export - {timestamp}\n\n"
-    
-    for msg in messages:
-        role = "You" if msg["role"] == "user" else "Assistant"
-        export_text += f"{role}: {msg['content']}\n\n"
-    
-    return export_text
-
-def generate_csv_export(messages):
-    """
-    Generate a CSV export of the chat conversation.
-    
-    Args:
-        messages (list): List of message dictionaries from session state
-        
-    Returns:
-        str: CSV-formatted string of the conversation
-    """
-    data = []
-    for msg in messages:
-        data.append({
-            "role": "user" if msg["role"] == "user" else "assistant",
-            "content": msg["content"],
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        })
-    
-    df = pd.DataFrame(data)
-    return df.to_csv(index=False)
-
-def export_as_file(content, mime_type):
-    """
-    Convert content to a base64 encoded string for download.
-    
-    Args:
-        content (str or bytes): The content to encode
-        mime_type (str): The MIME type of the content
-        
-    Returns:
-        str: Base64 encoded content ready for download links
-    """
-    if isinstance(content, str):
-        content_bytes = content.encode()
-    else:
-        content_bytes = content
-        
-    b64 = base64.b64encode(content_bytes).decode()
-    return b64 
+        st.markdown("<div style='text-align: center; color: #888; font-size: 12px;'>Powered by Google Gemini & Streamlit</div>", unsafe_allow_html=True) 
