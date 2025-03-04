@@ -144,7 +144,7 @@ def render_sidebar():
         st.markdown("### 📜 Conversation History")
         
         # Create a container for scrollable history
-        history_container = st.container(height=300, border=True)
+        history_container = st.container()
         
         with history_container:
             if "conversation_history" in st.session_state and len(st.session_state.conversation_history) > 0:

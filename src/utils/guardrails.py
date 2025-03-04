@@ -23,28 +23,16 @@ logger = logging.getLogger(__name__)
 
 # ============== Input Validation Models ================
 
-class InputValidationResult(BaseModel):
-    """Model for input validation results."""
-    is_valid: bool = True
-    has_pii: bool = False
-    has_harmful_content: bool = False
-    has_prompt_injection: bool = False
-    filtered_input: Optional[str] = None
-    rejection_reason: Optional[str] = None
-    risk_level: str = "low"  # low, medium, high
-    
-    class Config:
-        """Pydantic model configuration."""
-        arbitrary_types_allowed = True
+# Removed InputValidationResult class and replaced with dictionary-based approach
 
 # ============= Output Validation Models ===============
 
 class OutputValidationResult(BaseModel):
     """Model for output validation results."""
     is_valid: bool = True
+    has_hallucinations: bool = False
     has_harmful_content: bool = False
     has_pii: bool = False
-    has_hallucinations: bool = False
     filtered_output: Optional[str] = None
     rejection_reason: Optional[str] = None
     risk_level: str = "low"  # low, medium, high
@@ -165,7 +153,7 @@ def redact_pii(text: str) -> str:
         redacted_text = re.sub(pattern, "[REDACTED]", redacted_text)
     return redacted_text
 
-def validate_input(prompt: str, session_id: str = None) -> InputValidationResult:
+def validate_input(prompt: str, session_id: str = None) -> dict:
     """
     Validate user input for harmful content, PII, and prompt injection attempts.
     
@@ -174,29 +162,37 @@ def validate_input(prompt: str, session_id: str = None) -> InputValidationResult
         session_id: Optional session identifier for tracking
         
     Returns:
-        InputValidationResult: Validation result with appropriate flags
+        dict: Validation result with appropriate flags
     """
-    # Initialize validation result
-    result = InputValidationResult(is_valid=True)
+    # Initialize validation result with all required keys
+    result = {
+        "is_valid": True, 
+        "has_pii": False, 
+        "has_harmful_content": False, 
+        "has_prompt_injection": False, 
+        "filtered_input": prompt,
+        "rejection_reason": None,
+        "risk_level": "low"
+    }
     
     # Check prompt against harmful patterns
     for pattern in HARMFUL_PATTERNS:
         if re.search(pattern, prompt, re.IGNORECASE):
-            result.is_valid = False
-            result.has_harmful_content = True
-            result.risk_level = "high"
-            result.rejection_reason = "Your message contains potentially harmful content that violates our usage policy."
+            result["is_valid"] = False
+            result["has_harmful_content"] = True
+            result["risk_level"] = "high"
+            result["rejection_reason"] = "Your message contains potentially harmful content that violates our usage policy."
             logger.warning(f"Harmful content detected: {prompt[:50]}...")
             break
     
     # Check for prompt injection attempts
-    if result.is_valid:  # Only check if still valid
+    if result["is_valid"]:  # Only check if still valid
         for pattern in PROMPT_INJECTION_PATTERNS:
             if re.search(pattern, prompt, re.IGNORECASE):
-                result.is_valid = False
-                result.has_prompt_injection = True
-                result.risk_level = "medium"
-                result.rejection_reason = "Your message contains prompt engineering attempts that aren't allowed."
+                result["is_valid"] = False
+                result["has_prompt_injection"] = True
+                result["risk_level"] = "medium"
+                result["rejection_reason"] = "Your message contains prompt engineering attempts that aren't allowed."
                 logger.warning(f"Prompt injection attempt detected: {prompt[:50]}...")
                 break
     
@@ -207,20 +203,16 @@ def validate_input(prompt: str, session_id: str = None) -> InputValidationResult
             has_pii = True
             break
     
-    result.has_pii = has_pii
+    result["has_pii"] = has_pii
     
     # Redact PII but still allow the query
     if has_pii:
-        result.filtered_input = redact_pii(prompt)
-        result.risk_level = "medium"
+        result["filtered_input"] = redact_pii(prompt)
+        result["risk_level"] = "medium"
         logger.info(f"PII detected and redacted from input")
-    else:
-        result.filtered_input = prompt
-    
-    # Additional custom rules can be added here
     
     # Log the validation result
-    logger.info(f"Input validation result: valid={result.is_valid}, risk={result.risk_level}")
+    logger.info(f"Input validation result: valid={result['is_valid']}, risk={result['risk_level']}")
     
     return result
 

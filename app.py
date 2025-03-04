@@ -60,6 +60,10 @@ if "show_safety_indicators" not in st.session_state:
 if "enable_pii_detection" not in st.session_state:
     st.session_state.enable_pii_detection = ENABLE_PII_DETECTION
 
+# Initialize rate limiting
+if "rate_limit_requests" not in st.session_state:
+    st.session_state.rate_limit_requests = []
+
 def apply_theme_css():
     """
     Apply CSS styling based on the current theme.

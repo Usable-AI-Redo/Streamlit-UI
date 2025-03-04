@@ -9,7 +9,7 @@ import streamlit as st
 from typing import Dict, Any, Optional
 import logging
 
-from ..config.config import (
+from ..config.theme_config import (
     LIGHT_MODE,
     DARK_MODE
 )
@@ -138,6 +138,9 @@ def render_safety_guide():
     """
     Render a guide explaining the safety indicators.
     """
+    # Get the current theme for styling
+    current_theme = DARK_MODE if st.session_state.dark_mode else LIGHT_MODE
+    
     with st.expander("ℹ️ About AI Safety Indicators", expanded=False):
         st.markdown("""
         ### Understanding AI Safety Indicators

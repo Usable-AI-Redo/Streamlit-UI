@@ -88,11 +88,38 @@ A Streamlit-based conversational AI application powered by Google's Gemini model
    ```
 
 2. Create a virtual environment and install dependencies
+
+   **Option 1: Using pip (traditional method)**
    ```
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    pip install -r requirements.txt
    ```
+
+   **Option 2: Using uv (faster alternative)**
+   
+   [uv](https://github.com/astral-sh/uv) is a new, extremely fast Python package installer and resolver written in Rust.
+   
+   ```
+   # Install uv
+   pip install uv
+   
+   # Create virtual environment and install dependencies in one command
+   uv venv
+   uv pip install -r requirements.txt
+   
+   # Activate the virtual environment
+   # On Windows:
+   .venv\Scripts\activate
+   # On macOS/Linux:
+   source .venv/bin/activate
+   ```
+   
+   Benefits of using uv:
+   - Up to 10-100x faster than pip
+   - Reliable dependency resolution
+   - Compatible with existing Python workflows
+   - Learn more at [https://github.com/astral-sh/uv](https://github.com/astral-sh/uv)
 
 3. Create a `.env` file in the project root with your Gemini API key:
    ```

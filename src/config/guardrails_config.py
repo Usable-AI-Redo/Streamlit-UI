@@ -11,6 +11,7 @@ ENABLE_PII_DETECTION = True
 ENABLE_HARMFUL_CONTENT_DETECTION = True
 ENABLE_PROMPT_INJECTION_DETECTION = True
 INPUT_MIN_LENGTH = 2  # Minimum input length to process
+ENABLE_SPELL_CHECK = True  # Enable automatic spelling correction
 
 # Rate Limiting Settings
 RATE_LIMITING_ENABLED = True
@@ -27,6 +28,7 @@ ADD_HALLUCINATION_DISCLAIMER = True
 # Context Management Settings
 MAX_CONVERSATION_TOKENS = 8000
 MAX_HISTORY_MESSAGES = 50  # Max number of messages to keep in history
+ENABLE_TIMESTAMPS = True  # Enable timestamps for messages
 
 # Severity Thresholds
 HALLUCINATION_THRESHOLD = 3  # Number of hallucination indicators before flagging
