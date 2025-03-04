@@ -1,137 +1,222 @@
-# Gemini-Powered Q&A Chatbot
+# AI Powered Q&A Chatbot with Gemini
 
-A Streamlit-based conversational AI application powered by Google's Gemini model. This application provides an intuitive chat interface for users to interact with Gemini AI, with support for source citations, theme switching, and conversation exports.
+A professional Streamlit-based question answering chatbot powered by Google's Gemini models, designed for business use cases with a polished UI and robust features.
 
-## Features
+<div align="center">
+  <img src="https://img.shields.io/badge/Python-3.8+-blue.svg" alt="Python 3.8+">
+  <img src="https://img.shields.io/badge/Streamlit-1.24.0+-red.svg" alt="Streamlit 1.24.0+">
+  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License">
+</div>
 
-- 💬 **Interactive Chat Interface**: Clean and responsive design for seamless conversations
-- 🔍 **Source Citations**: Properly formatted source references from Gemini responses
-- 🌓 **Theme Switching**: Toggle between light and dark themes
-- 📊 **Conversation Export**: Export your chat history in text or CSV formats
-- 📝 **Feedback Collection**: Simple thumbs up/down system for quality tracking
+## 📋 Table of Contents
 
-## Tech Stack
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Setup and Installation](#setup-and-installation)
+- [Configuration Options](#configuration-options)
+- [Usage Guide](#usage-guide)
+- [Customization](#customization)
+- [Troubleshooting](#troubleshooting)
+- [Additional Resources](#additional-resources)
+- [Contributing](#contributing)
+- [License](#license)
 
-### Core Technologies
-- **Python 3.7+**: The primary programming language
-- **Streamlit 1.29.0**: Framework for creating web applications with Python
-- **Google Generative AI 0.3.1**: Python SDK for Google's Generative AI models
-- **Python-dotenv 1.0.0**: For loading environment variables from .env files
-- **Pandas 2.0.3**: For data handling and CSV export functionality
+## ✨ Features
 
-### AI Models
-- **gemini-2.0-flash**: Google's large language model optimized for text-based tasks
-  - **Features**: High-quality text generation, source citation, reasoning capabilities
-  - **Parameters**: Controllable temperature, top-k, top-p, and maximum output token settings
-  - **Context Window**: Supports up to 32,000 tokens
+- 💬 **Advanced Natural Language Processing**: Powered by Google's state-of-the-art Gemini models
+- 📚 **Source Citations**: Collapsible source references for factual information (with improved formatting)
+- 🎨 **Professional UI**: Clean and intuitive business-oriented interface with customizable themes
+- 📜 **Conversation History**: Full chat history tracking in the sidebar
+- 🔄 **Session Management**: Easy conversation reset and history navigation
+- ⚙️ **Configurable Parameters**: Adjustable model parameters for different use cases
+- 🔒 **Secure API Integration**: Environment-based API key management
 
-## Project Structure
+## 🗂 Project Structure
 
-### Root Directory
-- **app.py**: Main application entry point
-  - Initializes the Streamlit application
-  - Sets up the page configuration and theme
-  - Orchestrates the components (header, sidebar, chat interface)
-- **requirements.txt**: List of Python package dependencies
-- **.env**: Contains environment variables (API keys) - not tracked by Git
-- **.gitignore**: Specifies files to be ignored by Git
-
-### Source Code (`src/`)
-
-#### Components (`src/components/`)
-- **chat_interface.py**: Core chat functionality
-  - `configure_gemini()`: Sets up the Gemini API with your key
-  - `get_gemini_response()`: Handles API calls to the Gemini model
-  - `display_chat_history()`: Renders conversation history in the UI
-  - `handle_user_input()`: Processes user input and gets AI responses
-  - `format_sources_html()`: Formats source citations in HTML
-  
-- **header.py**: Application header component
-  - `render_header()`: Displays the application title, description, and icon
-  - Dynamically applies theme styling based on current theme selection
-  
-- **sidebar.py**: Application sidebar component
-  - `render_sidebar()`: Creates the sidebar with controls and information
-  - `generate_text_export()`: Formats chat history for text export
-  - `generate_csv_export()`: Formats chat history for CSV export
-  - `export_as_file()`: Handles the file download functionality
-
-#### Configuration (`src/config/`)
-- **config.py**: Application configuration settings
-  - Application settings (title, description, icon)
-  - Theme settings (light mode and dark mode color schemes)
-  - Gemini API settings (model name, temperature, token limits)
-  - Feature toggles (export options, feedback collection)
-
-#### Utilities (`src/utils/`)
-- **text_processing.py**: Text processing utilities
-  - `format_response_with_sources()`: Extracts and formats sources from responses
-  
-- **gemini_utils.py**: Utility functions for Gemini API interactions
-  - Helper functions for processing API responses
-  - Error handling for API calls
-
-## Getting Started
-
-### Prerequisites
-
-- Python 3.7+
-- Gemini API key (obtain from [Google AI Studio](https://ai.google.dev/))
-- Internet connection for API communication
-
-### Installation
-
-1. Clone this repository
-   ```
-   git clone <repository-url>
-   cd <repository-directory>
-   ```
-
-2. Create a virtual environment and install dependencies
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
-
-3. Create a `.env` file in the project root with your Gemini API key:
-   ```
-   GEMINI_API_KEY=your_gemini_api_key_here
-   ```
-
-### Running the Application
-
-Start the Streamlit server:
 ```
+project/
+│
+├── app.py                 # Main application entry point
+├── requirements.txt       # Project dependencies
+├── .env                   # Environment variables (API keys)
+│
+└── src/                   # Source code directory
+    ├── components/        # UI components
+    │   ├── header.py      # Page header component
+    │   ├── sidebar.py     # Sidebar component  
+    │   └── chat_interface.py # Chat display and input handling
+    │
+    ├── config/            # Configuration settings
+    │   └── config.py      # App configuration variables
+    │
+    └── utils/             # Utility functions
+        └── text_processing.py # Text formatting utilities
+```
+
+## 📋 Prerequisites
+
+Before installing the application, ensure you have:
+
+- **Python 3.8+** installed
+- **Google Gemini API key** (get one from [Google AI Studio](https://makersuite.google.com/app/apikey))
+- **Internet connection** for API communication
+- **Basic knowledge** of command-line operations
+
+## 🚀 Setup and Installation
+
+### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/gemini-chatbot.git
+cd gemini-chatbot
+```
+
+### Step 2: Set Up a Virtual Environment (Recommended)
+
+For Windows:
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+For macOS/Linux:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### Step 3: Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Step 4: Set Up API Key
+
+Create a `.env` file in the root directory with your Gemini API key:
+```
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+### Step 5: Launch the Application
+
+```bash
 streamlit run app.py
 ```
+The application will start and open in your default web browser.
 
-The application will be available at http://localhost:8501
+## ⚙️ Configuration Options
 
-## How to Use
+You can customize the application behavior by modifying the parameters in `src/config/config.py`:
 
-1. **Start a conversation**: Type your question in the input box and press Enter
-2. **View sources**: When the AI provides sources, they'll appear in a collapsible section
-3. **Switch themes**: Use the theme toggle in the sidebar to switch between light and dark mode
-4. **Export conversation**: Use the export options in the sidebar to download your chat history
-5. **Provide feedback**: Use the thumbs up/down buttons to rate responses
-6. **Reset conversation**: Click the "New Chat" button in the sidebar to start over
+- **Theme Colors**: Adjust primary and secondary colors
+- **Model Parameters**: Configure temperature, tokens, and other model settings
+- **UI Elements**: Customize titles, descriptions, and icons
 
-## Advanced Configuration
+```python
+# Example configuration parameters
+THEME_PRIMARY_COLOR = "#0066B2"  # Primary theme color
+GEMINI_MODEL = "gemini-pro"      # Model to use
+TEMPERATURE = 0.7                # Response creativity (0.0-1.0)
+```
 
-You can customize the application by modifying the settings in `src/config/config.py`:
+## 📝 Usage Guide
 
-- **Theme Colors**: Adjust the color scheme for light and dark modes
-- **Model Parameters**: Fine-tune the AI's response style by adjusting:
-  - `TEMPERATURE`: Higher values (0.7-1.0) for more creative responses, lower values (0.1-0.3) for more focused answers
-  - `TOP_K` and `TOP_P`: Control the diversity of responses
-  - `MAX_OUTPUT_TOKENS`: Limit the length of the model's responses
+### Starting a New Conversation
 
-## License
+1. Launch the application using `streamlit run app.py`
+2. The chat interface will appear with a welcome message
+3. Type your question in the input box at the bottom of the screen
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+### Asking Questions
 
-## Acknowledgements
+- Enter a clear, specific question for best results
+- For complex topics, consider breaking down into multiple questions
+- The model performs best with well-formulated questions
 
-- [Google Gemini](https://ai.google.dev/) for providing the AI models
-- [Streamlit](https://streamlit.io/) for the web application framework 
+### Working with Sources
+
+- Sources will appear in a collapsible "📚 Sources" section below responses
+- Click the section to expand and view source details
+- Sources are provided by the AI model and may require verification
+- The new enhanced formatting makes sources more readable with proper lists and spacing
+
+### Managing Conversation History
+
+- All exchanges are saved in your session
+- Use the sidebar to view the conversation history
+- Click "Reset Conversation" to start fresh
+
+## 🎨 Customization
+
+### Modifying the UI
+
+You can customize the appearance by editing the following files:
+- `src/components/header.py` - Modify the header appearance
+- `src/components/sidebar.py` - Adjust sidebar features
+- `src/config/config.py` - Change theme colors and text
+
+### Adjusting Model Behavior
+
+To change how the AI responds:
+1. Open `src/config/config.py`
+2. Modify the model parameters:
+   - Increase `TEMPERATURE` for more creative responses
+   - Increase `MAX_OUTPUT_TOKENS` for longer responses
+   - Adjust `TOP_K` and `TOP_P` for response variety
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+**API Key Error**:
+- Ensure your `.env` file is in the correct location with the proper format
+- Check that your API key is valid and active
+
+**Model Response Issues**:
+- If responses are cut off, try increasing `MAX_OUTPUT_TOKENS`
+- For irrelevant answers, try reformulating your question
+
+**Installation Problems**:
+- Make sure you're using a compatible Python version
+- Try reinstalling dependencies with `pip install -r requirements.txt --force-reinstall`
+
+## 📚 Additional Resources
+
+### Google Gemini API
+
+- [Google AI Studio](https://makersuite.google.com/) - Create and manage API keys
+- [Gemini API Documentation](https://ai.google.dev/docs) - Official API documentation
+- [Gemini Capabilities Guide](https://ai.google.dev/models/gemini) - Learn about model capabilities
+
+### Streamlit Resources
+
+- [Streamlit Documentation](https://docs.streamlit.io/) - Learn more about Streamlit
+- [Streamlit Components](https://streamlit.io/components) - Enhance your app with components
+- [Streamlit Forum](https://discuss.streamlit.io/) - Community support
+
+### Learning Materials
+
+- [Prompt Engineering Guide](https://www.promptingguide.ai/) - Learn to write effective prompts
+- [LLM Best Practices](https://www.deeplearning.ai/short-courses/chatgpt-prompt-engineering-for-developers/) - DeepLearning.AI course
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgements
+
+- [Streamlit](https://streamlit.io/) for the powerful web app framework
+- [Google AI](https://ai.google.dev/) for the Gemini models
+- All contributors who help improve this project 

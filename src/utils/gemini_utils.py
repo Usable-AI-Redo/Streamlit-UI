@@ -3,13 +3,7 @@ Utility functions for working with the Google Gemini API.
 """
 import google.generativeai as genai
 import streamlit as st
-from datetime import datetime
-import json
-from typing import Optional, Dict, Any, List, Tuple
-from pydantic import ValidationError
-import logging
-
-from ..config.config import (
+from src.config.config import (
     GEMINI_API_KEY, 
     GEMINI_MODEL, 
     TEMPERATURE, 
@@ -18,12 +12,6 @@ from ..config.config import (
     MAX_OUTPUT_TOKENS,
     SYSTEM_PROMPT
 )
-from ..models.response_models import GeminiResponse, ParsedResponse, Source
-from ..utils.response_parser import parse_response, format_sources_html
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 def configure_gemini():
     """
@@ -40,26 +28,21 @@ def configure_gemini():
     genai.configure(api_key=GEMINI_API_KEY)
     return True
 
-def get_gemini_response(prompt: str, message_history: Optional[List[Dict[str, str]]] = None) -> GeminiResponse:
+def get_gemini_response(prompt, message_history=None):
     """
-    Get a response from the Gemini model and validate it with Pydantic.
+    Get a response from the Gemini model.
     
     Args:
         prompt (str): The user's prompt/query
         message_history (list, optional): List of previous messages
         
     Returns:
-        GeminiResponse: A validated response object
+        str: The model's response text
     """
     try:
         # Check if Gemini is configured
         if not configure_gemini():
-            error_msg = "Error: Gemini API key not set. Please set the GEMINI_API_KEY in your .env file."
-            return GeminiResponse(
-                content=error_msg,
-                prompt=prompt,
-                timestamp=datetime.now()
-            )
+            return "Error: Gemini API key not set. Please set the GEMINI_API_KEY in your .env file."
         
         # Get generation config
         generation_config = {
@@ -100,46 +83,47 @@ def get_gemini_response(prompt: str, message_history: Optional[List[Dict[str, st
         
         response = chat.send_message(enhanced_prompt)
         
-        # Get the text response
-        response_text = ""
+        # Ensure we have a text response
         if hasattr(response, 'text'):
-            response_text = response.text
+            return response.text
         elif isinstance(response, str):
-            response_text = response
+            return response
         else:
-            response_text = str(response)
-        
-        # Parse response to separate content and sources
-        parsed = parse_response(response_text, prompt)
-        
-        # Create a validated GeminiResponse object
-        validated_response = GeminiResponse(
-            content=parsed.main_content,
-            raw_sources_text=parsed.sources_section,
-            sources=parsed.parsed_sources,
-            prompt=prompt,
-            timestamp=datetime.now()
-        )
-        
-        return validated_response
+            return str(response)
         
     except Exception as e:
-        logger.error(f"Error in Gemini API request: {str(e)}")
-        # Return a valid error response
-        return GeminiResponse(
-            content=f"Error: {str(e)}",
-            prompt=prompt,
-            timestamp=datetime.now()
-        )
+        return f"Error: {str(e)}"
 
-def format_response_with_sources(response: GeminiResponse) -> Tuple[str, Optional[str]]:
+def format_response_with_sources(response_text):
     """
-    Extract main content and sources from a validated response.
+    Split a response into main content and sources sections.
     
     Args:
-        response (GeminiResponse): The validated response object
+        response_text (str): The raw response from the model
         
     Returns:
-        tuple: (main_content, sources_section)
+        tuple: (main_content, sources_section) where sources_section may be None
     """
-    return response.content, response.raw_sources_text 
+    # Check for source sections
+    source_markers = ["sources:", "references:", "citations:"]
+    
+    # Find if any source marker exists in the response
+    source_index = -1
+    found_marker = None
+    
+    for marker in source_markers:
+        if marker in response_text.lower():
+            idx = response_text.lower().find(marker)
+            if source_index == -1 or idx < source_index:
+                source_index = idx
+                found_marker = marker
+    
+    # If no source section found, return the original text
+    if source_index == -1:
+        return response_text, None
+    
+    # Split the response into main content and sources
+    main_content = response_text[:source_index].strip()
+    sources_section = response_text[source_index:].strip()
+    
+    return main_content, sources_section 
